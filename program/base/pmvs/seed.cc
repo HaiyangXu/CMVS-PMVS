@@ -23,14 +23,20 @@ void Cseed::init(const std::vector<std::vector<Cpoint> >& points) {
     m_ppoints[index].resize(gwidth * gheight);
   }
   
-  readPoints(points);
+#ifdef HYX_TEST
+  readPointsExperiment(points);
+  readMatches();
+#else
+  readPoints(points);// read points to
+#endif
+  
 }
 
 void Cseed::readPoints(const std::vector<std::vector<Cpoint> >& points) {
   for (int index = 0; index < m_fm.m_num; ++index) {
     for (int i = 0; i < (int)points[index].size(); ++i) {
       Ppoint ppoint(new Cpoint(points[index][i]));
-      ppoint->m_itmp = index;
+      ppoint->m_imgeid = index;
       const int ix = ((int)floor(ppoint->m_icoord[0] + 0.5f)) / m_fm.m_csize;
       const int iy = ((int)floor(ppoint->m_icoord[1] + 0.5f)) / m_fm.m_csize;
       const int index2 = iy * m_fm.m_pos.m_gwidths[index] + ix;
@@ -127,14 +133,16 @@ void Cseed::clear(void) {
   vector<vector<vector<Ppoint> > >().swap(m_ppoints);
 }
 
-void Cseed::initialMatch(const int index, const int id) {
-  vector<int> indexes;
-  m_fm.m_optim.collectImages(index, indexes);
-
-  if (m_fm.m_tau < (int)indexes.size())
-    indexes.resize(m_fm.m_tau);
+void Cseed::initialMatch(const int index, const int id)
+{
+  vector<int> visibleSet;  // 选择index对应图片的处理集合
   
-  if (indexes.empty())
+  m_fm.m_optim.collectImages(index, visibleSet);
+
+  if (m_fm.m_tau < (int)visibleSet.size())
+    visibleSet.resize(m_fm.m_tau);
+  
+  if (visibleSet.empty())
     return;  
 
   int totalcount = 0;
@@ -145,26 +153,32 @@ void Cseed::initialMatch(const int index, const int id) {
   const int gwidth = m_fm.m_pos.m_gwidths[index];
 
   int index2 = -1;
-  for (int y = 0; y < gheight; ++y) {
-    for (int x = 0; x < gwidth; ++x) {
+for (int y = 0; y < gheight; ++y) 
+{
+    for (int x = 0; x < gwidth; ++x) 
+	{
       ++index2;
       if (!canAdd(index, x, y))
 	continue;
 
-      for (int p = 0; p < (int)m_ppoints[index][index2].size(); ++p) {
+     for (int p = 0; p < (int)m_ppoints[index][index2].size(); ++p) {
 	// collect features that satisfies epipolar geometry
 	// constraints and sort them according to the differences of
 	// distances between two cameras.
-	vector<Ppoint> vcp;
-	collectCandidates(index, indexes,
-                          *m_ppoints[index][index2][p], vcp);
-        
+	vector<Ppoint> epipolarPointsSet;
+#ifndef HYX_TEST 
+	collectCandidates(index, visibleSet,
+                          *m_ppoints[index][index2][p], epipolarPointsSet);
+#else
+	collectCandidatesMatch(index, visibleSet,
+	                    	*m_ppoints[index][index2][p], epipolarPointsSet);
+#endif     
 	int count = 0;
 	Cpatch bestpatch;
 	//======================================================================
-	for (int i = 0; i < (int)vcp.size(); ++i) {
+	for (int i = 0; i < (int)epipolarPointsSet.size(); ++i) {
 	  Cpatch patch;
-	  patch.m_coord = vcp[i]->m_coord;
+	  patch.m_coord = epipolarPointsSet[i]->m_coord;
 	  patch.m_normal =
             m_fm.m_pss.m_photos[index].m_center - patch.m_coord;
 
@@ -173,13 +187,13 @@ void Cseed::initialMatch(const int index, const int id) {
 	  patch.m_flag = 0;
 
           ++m_fm.m_pos.m_counts[index][index2];
-          const int ix = ((int)floor(vcp[i]->m_icoord[0] + 0.5f)) / m_fm.m_csize;
-          const int iy = ((int)floor(vcp[i]->m_icoord[1] + 0.5f)) / m_fm.m_csize;
-          const int index3 = iy * m_fm.m_pos.m_gwidths[vcp[i]->m_itmp] + ix;
-          if (vcp[i]->m_itmp < m_fm.m_tnum)
-            ++m_fm.m_pos.m_counts[vcp[i]->m_itmp][index3];
+          const int ix = ((int)floor(epipolarPointsSet[i]->m_icoord[0] + 0.5f)) / m_fm.m_csize;
+          const int iy = ((int)floor(epipolarPointsSet[i]->m_icoord[1] + 0.5f)) / m_fm.m_csize;
+          const int index3 = iy * m_fm.m_pos.m_gwidths[epipolarPointsSet[i]->m_imgeid] + ix;
+          if (epipolarPointsSet[i]->m_imgeid < m_fm.m_tnum)
+            ++m_fm.m_pos.m_counts[epipolarPointsSet[i]->m_imgeid][index3];
           
-	  const int flag = initialMatchSub(index, vcp[i]->m_itmp, id, patch);
+	  const int flag = initialMatchSub(index, epipolarPointsSet[i]->m_imgeid, id, patch);
 	  if (flag == 0) {
 	    ++count;
 	    if (bestpatch.score(m_fm.m_nccThreshold) <
@@ -188,7 +202,7 @@ void Cseed::initialMatch(const int index, const int id) {
 	    if (m_fm.m_countThreshold0 <= count)
 	      break;
 	  }
-      	}
+     }
 	if (count != 0) {
 	  Ppatch ppatch(new Cpatch(bestpatch));
 	  m_fm.m_pos.addPatch(ppatch);
@@ -299,7 +313,7 @@ void Cseed::collectCandidates(const int index, const std::vector<int>& indexes,
   // set distances to m_response
   vector<Ppoint> vcptmp;
   for (int i = 0; i < (int)vcp.size(); ++i) {
-    unproject(index, vcp[i]->m_itmp, point, *vcp[i], vcp[i]->m_coord);
+    unproject(index, vcp[i]->m_imgeid, point, *vcp[i], vcp[i]->m_coord);
     
     if (m_fm.m_pss.m_photos[index].m_projection[m_fm.m_level][2] *
         vcp[i]->m_coord <= 0.0)
@@ -312,7 +326,7 @@ void Cseed::collectCandidates(const int index, const std::vector<int>& indexes,
     //??? from the closest
     vcp[i]->m_response =
       fabs(norm(vcp[i]->m_coord - m_fm.m_pss.m_photos[index].m_center) -
-           norm(vcp[i]->m_coord - m_fm.m_pss.m_photos[vcp[i]->m_itmp].m_center));
+           norm(vcp[i]->m_coord - m_fm.m_pss.m_photos[vcp[i]->m_imgeid].m_center));
     
     vcptmp.push_back(vcp[i]);
   }
@@ -418,6 +432,7 @@ void Cseed::unproject(const int index0, const int index1,
 // starting with (index, indexs), set visible images by looking at correlation.
 int Cseed::initialMatchSub(const int index0, const int index1,
                            const int id, Cpatch& patch) {
+  //对Patch添加 可见集合 image
   //----------------------------------------------------------------------
   patch.m_images.clear();
   patch.m_images.push_back(index0);
@@ -444,4 +459,171 @@ int Cseed::initialMatchSub(const int index0, const int index1,
   ++m_pcounts[id];
   //----------------------------------------------------------------------
   return 0;
+}
+
+//Add by HYX 
+void PMVS3::Cseed::collectCandidatesMatch(const int index, const std::vector<int>& indexes, const Cpoint& point, std::vector<Ppoint>& vcp)
+{
+#ifndef HYX_TEST
+	const Vec3 p0(point.m_icoord[0], point.m_icoord[1], 1.0);
+	for (int i = 0; i < (int)indexes.size(); ++i) {        
+		const int indexid = indexes[i];
+
+		vector<TVec2<int> > cells;
+		collectCells(index, indexid, point, cells);
+		Mat3 F;
+		Image::setF(m_fm.m_pss.m_photos[index], m_fm.m_pss.m_photos[indexid],
+			F, m_fm.m_level);
+
+		for (int i = 0; i < (int)cells.size(); ++i) {
+			const int x = cells[i][0];      const int y = cells[i][1];
+			if (!canAdd(indexid, x, y))
+				continue;
+			const int index2 = y * m_fm.m_pos.m_gwidths[indexid] + x;
+
+			vector<Ppoint>::iterator begin = m_ppoints[indexid][index2].begin();
+			vector<Ppoint>::iterator end = m_ppoints[indexid][index2].end();
+			while (begin != end) {
+				Cpoint& rhs = **begin;
+				// ? use type to reject candidates?
+				if (point.m_type != rhs.m_type) {
+					++begin;
+					continue;
+				}
+
+				const Vec3 p1(rhs.m_icoord[0], rhs.m_icoord[1], 1.0);
+				if (m_fm.m_epThreshold <= Image::computeEPD(F, p0, p1)) {
+					++begin;          
+					continue;
+				}
+				vcp.push_back(*begin);
+				++begin;
+			}
+		}
+	}
+#else
+
+	//寻找已有匹配点
+
+	int pointid=point.m_icoord[0]*m_fm.m_pss.getHeight(point.m_imgeid,m_fm.m_level)+point.m_icoord[1];
+	std::vector<int>::const_iterator it=indexes.begin();
+	while(it!=indexes.end())
+	{
+		if (index<m_fm.m_matchmatrix.size()&&*it<m_fm.m_matchmatrix[index].size())
+		{
+
+			std::map<int,int>& matchmatrix=m_fm.m_matchmatrix[index][*it];
+			std::map<int,int>::iterator matchit=matchmatrix.find(pointid);
+			if(matchit!=matchmatrix.end())
+			{
+				Ppoint newpoint(new Cpoint());
+				int height=m_fm.m_pss.getHeight(*it,m_fm.m_level);
+				int matchpoint=matchit->second;
+				int x=matchpoint/height;
+				int y=matchpoint%height;
+				newpoint->m_icoord=Vec3f(x,y,1);
+				newpoint->m_imgeid=*it;
+				vcp.push_back(newpoint);
+			}
+		}
+		it++;
+	}
+	//vcp.push_back();
+
+
+
+#endif
+
+	// set distances to m_response
+	vector<Ppoint> vcptmp;
+	for (int i = 0; i < (int)vcp.size(); ++i) {
+		unproject(index, vcp[i]->m_imgeid, point, *vcp[i], vcp[i]->m_coord);
+
+		if (m_fm.m_pss.m_photos[index].m_projection[m_fm.m_level][2] *
+			vcp[i]->m_coord <= 0.0)
+			continue;
+
+		if (m_fm.m_pss.getMask(vcp[i]->m_coord, m_fm.m_level) == 0 ||
+			m_fm.insideBimages(vcp[i]->m_coord) == 0)
+			continue;
+
+		//??? from the closest
+		vcp[i]->m_response =
+			fabs(norm(vcp[i]->m_coord - m_fm.m_pss.m_photos[index].m_center) -
+			norm(vcp[i]->m_coord - m_fm.m_pss.m_photos[vcp[i]->m_imgeid].m_center));
+
+		vcptmp.push_back(vcp[i]);
+	}
+	vcptmp.swap(vcp);
+	sort(vcp.begin(), vcp.end());
+}
+
+// add by HYX
+void PMVS3::Cseed::readPointsExperiment(const std::vector<std::vector<Cpoint> >& points)
+{
+	//readPoints(points);
+
+#ifdef HYX_TEST 
+	for (int index = 0; index < m_fm.m_num; ++index) {
+
+		char name[1024];
+		sprintf(name, "%smatch/featureindex%04d.txt", m_fm.m_prefix.c_str(), m_fm.m_images[index]);
+		ifstream  input(name);
+		if (!input.is_open())
+		{
+			std::cerr<<"Can not read the key points file!\n";
+			exit(-1);
+		}
+		int mx,my,pointid;
+		while(input>>pointid )
+		{
+			mx=pointid/m_fm.m_pss.getHeight(index,m_fm.m_level);
+			my=pointid%m_fm.m_pss.getHeight(index,m_fm.m_level);
+			Ppoint ppoint(new Cpoint());
+			ppoint->m_icoord=Vec3f(mx,my,1);
+            ppoint->m_type=3;
+            ppoint->m_imgeid=index;
+            const int ix = ((int)floor(ppoint->m_icoord[0] + 0.5f)) / m_fm.m_csize;
+            const int iy = ((int)floor(ppoint->m_icoord[1] + 0.5f)) / m_fm.m_csize;
+            const int index2 = iy * m_fm.m_pos.m_gwidths[index] + ix;
+            m_ppoints[index][index2].reserve(sqrt((float)m_fm.m_csize)/2);
+            m_ppoints[index][index2].push_back(ppoint);
+		}
+		
+	}
+#endif
+}
+
+void PMVS3::Cseed::readMatches()
+{
+#ifdef HYX_TEST 
+	//throw std::logic_error("The method or operation is not implemented.");
+	m_fm.m_matchmatrix.resize(m_fm.m_num);
+	for(int i=0;i<m_fm.m_matchmatrix.size();i++)
+	{
+		m_fm.m_matchmatrix[i].resize(m_fm.m_num);
+	}
+	for(int i_image=0;i_image<m_fm.m_num;i_image++)
+	{
+
+		for(int j_image=i_image+1;j_image<m_fm.m_num;j_image++)
+		{
+			char name[1024];//match0000_0001.txt
+			sprintf(name, "%smatch/matchindex%04d_%04d.txt", m_fm.m_prefix.c_str(), m_fm.m_images[i_image],m_fm.m_images[j_image]);
+			ifstream input(name);
+			if(!input.is_open())
+			{
+				std::cerr<<"Cannot read math file !\n";
+				exit(-1);
+			}
+			int i_match,j_match;
+			while (input>>i_match>>j_match)
+			{
+
+				m_fm.m_matchmatrix[i_image][j_image][i_match]=j_match;
+				m_fm.m_matchmatrix[j_image][i_image][j_match]=i_match;
+			}
+		}
+	}
+#endif
 }

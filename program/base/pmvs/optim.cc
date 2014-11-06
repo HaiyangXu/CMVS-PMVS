@@ -107,7 +107,8 @@ int Coptim::preProcess(Cpatch& patch, const int id, const int seed) {
 
   // Here define reference images, and sort images.
   // Something similar to constraintImages is done inside.
-  constraintImages(patch, m_fm.m_nccThresholdBefore, id);
+ 
+  constraintImages(patch, m_fm.m_nccThresholdBefore, id); // 使用NCC过滤 patch的可见集合 
   
   // Fix the reference image and sort the other  m_tau - 1 images.
   sortImages(patch);

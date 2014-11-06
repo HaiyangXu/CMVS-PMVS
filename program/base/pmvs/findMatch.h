@@ -1,6 +1,6 @@
 #ifndef PMVS3_FINDMATCH_H
 #define PMVS3_FINDMATCH_H
-
+#define HYX_TEST
 #include <vector>
 #include <list>
 #include <string>
@@ -156,6 +156,13 @@ class CfindMatch {
   Coptim m_optim;
 
   int m_debug;
+  //------------------------------------------------------------------------
+  //HYX
+  //添加匹配矩阵
+
+#ifdef HYX_TEST
+  std::vector<std::vector <std::map<int,int> >> m_matchmatrix;
+#endif
  protected:
   void init(void);
   void initTargets(void);

@@ -23,6 +23,7 @@ class Cseed {
 
  protected:
   void readPoints(const std::vector<std::vector<Cpoint> >& points);
+  void readPointsExperiment(const std::vector<std::vector<Cpoint> >& points);
   int canAdd(const int index, const int x, const int y);  
 
   void initialMatch(const int index, const int id);
@@ -31,7 +32,7 @@ class Cseed {
   
   void collectCandidates(const int index, const std::vector<int>& indexes,
                          const Cpoint& point, std::vector<Ppoint>& vcp);
-
+  void collectCandidatesMatch(const int index, const std::vector<int>& indexes, const Cpoint& point, std::vector<Ppoint>& vcp);
   int initialMatchSub(const int index0, const int index1,
                       const int id, Patch::Cpatch& patch);
   
@@ -49,7 +50,7 @@ class Cseed {
   //----------------------------------------------------------------------
   void initialMatchThread(void);
   static void* initialMatchThreadTmp(void* arg);
-
+  void readMatches();
   // Number of trials
   std::vector<int> m_scounts;
   // Number of failures in the prep

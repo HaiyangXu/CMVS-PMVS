@@ -82,7 +82,9 @@ void CfindMatch::init(const Soption& option) {
   // Detect features if not yet done
   CdetectFeatures df;
   const int fcsize = 16;
-  df.run(m_pss, m_num, fcsize, m_level, m_CPU);  
+#ifndef HYX_TEST
+  df.run(m_pss, m_num, fcsize, m_level, m_CPU);
+#endif  
   
   // Initialize each core member. m_po should be first
   m_pos.init();
