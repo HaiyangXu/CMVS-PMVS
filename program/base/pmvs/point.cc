@@ -7,9 +7,9 @@ using namespace std;
 Cpoint::Cpoint(void) {
   m_response = -1.0;
   m_type = -1;
-#ifdef HYX_TEST
+
   pointid= -1;
-#endif
+
 }
 
 Cpoint::~Cpoint() {

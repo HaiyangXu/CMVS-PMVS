@@ -474,44 +474,7 @@ int Cseed::initialMatchSub(const int index0, const int index1,
 //Add by HYX 
 void PMVS3::Cseed::collectCandidatesMatch(const int index, const std::vector<int>& indexes, const Cpoint& point, std::vector<Ppoint>& vcp)
 {
-#ifndef HYX_TEST
-	const Vec3 p0(point.m_icoord[0], point.m_icoord[1], 1.0);
-	for (int i = 0; i < (int)indexes.size(); ++i) {        
-		const int indexid = indexes[i];
 
-		vector<TVec2<int> > cells;
-		collectCells(index, indexid, point, cells);
-		Mat3 F;
-		Image::setF(m_fm.m_pss.m_photos[index], m_fm.m_pss.m_photos[indexid],
-			F, m_fm.m_level);
-
-		for (int i = 0; i < (int)cells.size(); ++i) {
-			const int x = cells[i][0];      const int y = cells[i][1];
-			if (!canAdd(indexid, x, y))
-				continue;
-			const int index2 = y * m_fm.m_pos.m_gwidths[indexid] + x;
-
-			vector<Ppoint>::iterator begin = m_ppoints[indexid][index2].begin();
-			vector<Ppoint>::iterator end = m_ppoints[indexid][index2].end();
-			while (begin != end) {
-				Cpoint& rhs = **begin;
-				// ? use type to reject candidates?
-				if (point.m_type != rhs.m_type) {
-					++begin;
-					continue;
-				}
-
-				const Vec3 p1(rhs.m_icoord[0], rhs.m_icoord[1], 1.0);
-				if (m_fm.m_epThreshold <= Image::computeEPD(F, p0, p1)) {
-					++begin;          
-					continue;
-				}
-				vcp.push_back(*begin);
-				++begin;
-			}
-		}
-	}
-#else
 
 	//寻找已有匹配点
 
@@ -542,7 +505,7 @@ void PMVS3::Cseed::collectCandidatesMatch(const int index, const std::vector<int
 
 
 
-#endif
+
 
 	// set distances to m_response
 	vector<Ppoint> vcptmp;
@@ -573,7 +536,6 @@ void PMVS3::Cseed::readPointsExperiment(const std::vector<std::vector<Cpoint> >&
 {
 	//readPoints(points);
 
-#ifdef HYX_TEST 
 	for (int index = 0; index < m_fm.m_num; ++index) {
 
 		char name[1024];
@@ -601,12 +563,10 @@ void PMVS3::Cseed::readPointsExperiment(const std::vector<std::vector<Cpoint> >&
 		}
 		
 	}
-#endif
 }
 
 void PMVS3::Cseed::readMatches()
-{
-#ifdef HYX_TEST 
+{ 
 	//throw std::logic_error("The method or operation is not implemented.");
 	m_fm.m_matchmatrix.resize(m_fm.m_num);
 	for(int i=0;i<m_fm.m_matchmatrix.size();i++)
@@ -635,5 +595,4 @@ void PMVS3::Cseed::readMatches()
 			}
 		}
 	}
-#endif
 }

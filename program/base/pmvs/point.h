@@ -21,9 +21,9 @@ class Cpoint {
   int m_imgeid;
   // 3D coordinate
   Vec4f m_coord;
-#ifdef HYX_TEST
+
   int pointid;
-#endif
+
   bool operator < (const Cpoint& rhs) const {
     return m_response < rhs.m_response;
   }
