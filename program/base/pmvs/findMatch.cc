@@ -64,6 +64,8 @@ void CfindMatch::init(const Soption& option) {
   m_visdata = option.m_visdata;
   m_visdata2 = option.m_visdata2;
   
+  m_useMatch=option.m_useMatch;
+  m_usePoint=option.m_usePoint;
   //----------------------------------------------------------------------
   pthread_rwlock_init(&m_lock, NULL);
   m_imageLocks.resize(m_num);
@@ -82,9 +84,10 @@ void CfindMatch::init(const Soption& option) {
   // Detect features if not yet done
   CdetectFeatures df;
   const int fcsize = 16;
-#ifndef HYX_TEST
-  df.run(m_pss, m_num, fcsize, m_level, m_CPU);
-#endif  
+  if(!m_usePoint)
+  {
+	  df.run(m_pss, m_num, fcsize, m_level, m_CPU);
+  }
   
   // Initialize each core member. m_po should be first
   m_pos.init();

@@ -23,12 +23,18 @@ void Cseed::init(const std::vector<std::vector<Cpoint> >& points) {
     m_ppoints[index].resize(gwidth * gheight);
   }
   
-#ifdef HYX_TEST
-  readPointsExperiment(points);
-  readMatches();
-#else
-  readPoints(points);// read points to
-#endif
+  if (m_fm.m_usePoint)
+  {
+	  readPointsExperiment(points);
+	  if (m_fm.m_useMatch)
+	  {
+		  readMatches();
+	  }
+  } 
+  else
+  {
+	  readPoints(points);// read points to
+  }
   
 }
 
@@ -166,13 +172,17 @@ for (int y = 0; y < gheight; ++y)
 	// constraints and sort them according to the differences of
 	// distances between two cameras.
 	vector<Ppoint> epipolarPointsSet;
-#ifndef HYX_TEST 
-	collectCandidates(index, visibleSet,
-                          *m_ppoints[index][index2][p], epipolarPointsSet);
-#else
-	collectCandidatesMatch(index, visibleSet,
-	                    	*m_ppoints[index][index2][p], epipolarPointsSet);
-#endif     
+ 
+	if (m_fm.m_useMatch)
+	{
+		collectCandidatesMatch(index, visibleSet,
+			*m_ppoints[index][index2][p], epipolarPointsSet);
+	} 
+	else
+	{
+		collectCandidates(index, visibleSet,
+			*m_ppoints[index][index2][p], epipolarPointsSet);
+	}
 	int count = 0;
 	Cpatch bestpatch;
 	//======================================================================

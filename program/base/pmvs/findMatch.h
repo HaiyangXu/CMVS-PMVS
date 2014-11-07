@@ -1,6 +1,5 @@
 #ifndef PMVS3_FINDMATCH_H
 #define PMVS3_FINDMATCH_H
-#define HYX_TEST
 #include <vector>
 #include <list>
 #include <string>
@@ -160,10 +159,10 @@ class CfindMatch {
   //HYX
   //添加匹配矩阵
 
-#ifdef HYX_TEST
   std::vector<std::vector <std::map<int,int> >> m_matchmatrix;
-#endif
- protected:
+  int m_useMatch;
+  int m_usePoint;
+
   void init(void);
   void initTargets(void);
   void updateThreshold(void);

@@ -19,7 +19,8 @@ struct Soption{
   int m_useBound;
   int m_useVisData;
   int m_sequence;
-  
+  int m_usePoint;
+  int m_useMatch;//use provided match;
   float m_maxAngleThreshold;
   float m_quadThreshold;
   

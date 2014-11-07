@@ -19,6 +19,7 @@ Soption::Soption(void) {
   m_tflag = -10;
   m_oflag = -10;
 
+  m_useMatch=0;			m_usePoint=0;
   // Max angle must be at least this big
   m_maxAngleThreshold = 10.0f * M_PI / 180.0f;
   // The smaller the tighter
@@ -93,6 +94,14 @@ void Soption::init(const std::string prefix, const std::string option) {
       ifstr >> m_maxAngleThreshold;
       m_maxAngleThreshold *= M_PI / 180.0f;
     }
+	else if(name =="useMatch")
+	{
+		ifstr>> m_useMatch;
+	}
+	else if (name =="usePoint")
+	{
+		ifstr>>m_usePoint;
+	}
     else {
       cerr << "Unrecognizable option: " << name << endl;   exit (1);
     }
