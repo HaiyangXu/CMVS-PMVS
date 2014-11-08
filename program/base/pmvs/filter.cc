@@ -608,14 +608,14 @@ void Cfilter::filterSmallGroups(void) {
       continue;
 
     label[pid] = ++id;
-    list<int> ltmp;
-    ltmp.push_back(pid);
+    list<int> group_of_id;
+    group_of_id.push_back(pid);
 
-    while (!ltmp.empty()) {
-      const int ptmp = ltmp.front();
-      ltmp.pop_front();
+    while (!group_of_id.empty()) {
+      const int ptmp = group_of_id.front();
+      group_of_id.pop_front();
 
-      filterSmallGroupsSub(ptmp, id, label, ltmp);
+      filterSmallGroupsSub(ptmp, id, label, group_of_id);
     }
   }  
   id++;
@@ -668,65 +668,66 @@ void Cfilter::filterSmallGroups(void) {
        << "%)\t" << (tv - curtime)/CLOCKS_PER_SEC << " secs" << endl;
 }
 
-void Cfilter::filterSmallGroupsSub(const int pid, const int id,
-                                   std::vector<int>& label,
-                                   std::list<int>& ltmp) const {  
-  // find neighbors of ptmp and set their ids
-  const Cpatch& patch = *m_fm.m_pos.m_ppatches[pid];
-  
-  const int index = patch.m_images[0];
-  const int ix = patch.m_grids[0][0];
-  const int iy = patch.m_grids[0][1];
-  const int gwidth = m_fm.m_pos.m_gwidths[index];
-  const int gheight = m_fm.m_pos.m_gheights[index];
-  
-  for (int y = -1; y <= 1; ++y) {
-    const int iytmp = iy + y;
-    if (iytmp < 0 || gheight <= iytmp)
-      continue;
-    for (int x = -1; x <= 1; ++x) {
-      const int ixtmp = ix + x;
-      if (ixtmp < 0 || gwidth <= ixtmp)
-	continue;
-      
-      //if (1 < abs(x) + abs(y))
-      //continue;
+void Cfilter::filterSmallGroupsSub(const int pid, const int gid,
+	std::vector<int>& label,
+	std::list<int>& group_of_id) const 
+{  
+	// find neighbors of ptmp and set their ids
+	const Cpatch& patch = *m_fm.m_pos.m_ppatches[pid];
 
-      const int index2 = iytmp * gwidth + ixtmp;
-      vector<Ppatch>::iterator bgrid = m_fm.m_pos.m_pgrids[index][index2].begin();
-      vector<Ppatch>::iterator egrid = m_fm.m_pos.m_pgrids[index][index2].end();
-      while (bgrid != egrid) {
-        const int itmp = (*bgrid)->m_flag;
-	if (label[itmp] != -1) {
-          ++bgrid;
-	  continue;
-        }
-	
-	if (m_fm.isNeighbor(patch, **bgrid,
-			    m_fm.m_neighborThreshold2)) {
-	  label[itmp] = id;
-	  ltmp.push_back(itmp);
+	const int index = patch.m_images[0];
+	const int ix = patch.m_grids[0][0];
+	const int iy = patch.m_grids[0][1];
+	const int gwidth = m_fm.m_pos.m_gwidths[index];
+	const int gheight = m_fm.m_pos.m_gheights[index];
+
+	for (int y = -1; y <= 1; ++y) {
+		const int iytmp = iy + y;
+		if (iytmp < 0 || gheight <= iytmp)
+			continue;
+		for (int x = -1; x <= 1; ++x) {
+			const int ixtmp = ix + x;
+			if (ixtmp < 0 || gwidth <= ixtmp)
+				continue;
+
+			//if (1 < abs(x) + abs(y))
+			//continue;
+
+			const int index2 = iytmp * gwidth + ixtmp;
+			vector<Ppatch>::iterator bgrid = m_fm.m_pos.m_pgrids[index][index2].begin();
+			vector<Ppatch>::iterator egrid = m_fm.m_pos.m_pgrids[index][index2].end();
+			while (bgrid != egrid) {
+				const int itmp = (*bgrid)->m_flag;
+				if (label[itmp] != -1) {
+					++bgrid;
+					continue;
+				}
+
+				if (m_fm.isNeighbor(patch, **bgrid,
+					m_fm.m_neighborThreshold2)) {
+						label[itmp] = gid;
+						group_of_id.push_back(itmp);
+				}
+				++bgrid;
+			}
+			bgrid = m_fm.m_pos.m_vpgrids[index][index2].begin();
+			egrid = m_fm.m_pos.m_vpgrids[index][index2].end();
+			while (bgrid != egrid) {
+				const int itmp = (*bgrid)->m_flag;
+				if (label[itmp] != -1) {
+					++bgrid;
+					continue;
+				}
+
+				if (m_fm.isNeighbor(patch, **bgrid,
+					m_fm.m_neighborThreshold2)) {
+						label[itmp] = gid;
+						group_of_id.push_back(itmp);
+				}
+				++bgrid;
+			}
+		}
 	}
-        ++bgrid;
-      }
-      bgrid = m_fm.m_pos.m_vpgrids[index][index2].begin();
-      egrid = m_fm.m_pos.m_vpgrids[index][index2].end();
-      while (bgrid != egrid) {
-        const int itmp = (*bgrid)->m_flag;
-	if (label[itmp] != -1) {
-          ++bgrid;
-	  continue;
-        }
-	
-	if (m_fm.isNeighbor(patch, **bgrid,
-			    m_fm.m_neighborThreshold2)) {
-	  label[itmp] = id;
-	  ltmp.push_back(itmp);
-	}
-        ++bgrid;
-      }
-    }
-  }
 }
 
 void Cfilter::setDepthMaps(void) {
