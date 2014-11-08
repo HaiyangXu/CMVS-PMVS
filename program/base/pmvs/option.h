@@ -21,6 +21,9 @@ struct Soption{
   int m_sequence;
   int m_usePoint;
   int m_useMatch;//use provided match;
+  int m_filterOutside;
+  int m_filterExact;
+  int m_filterNeighbor;
   float m_maxAngleThreshold;
   float m_quadThreshold;
   
@@ -37,7 +40,7 @@ struct Soption{
   std::vector<std::vector<int> > m_visdata;
   std::vector<std::vector<int> > m_visdata2;
   int m_useSeed;
-
+  int m_filterGroups;
   Soption(void);
   
   void init(const std::string prefix, const std::string option);

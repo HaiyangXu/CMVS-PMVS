@@ -19,17 +19,28 @@ void Cfilter::init(void) {
 void Cfilter::run(void) {
   setDepthMapsVGridsVPGridsAddPatchV(0);
 
-  filterOutside();
-  setDepthMapsVGridsVPGridsAddPatchV(1);
+  if(m_fm.m_filterOutside)
+  {
+	  filterOutside();
+	  setDepthMapsVGridsVPGridsAddPatchV(1);
+  }
 
-  filterExact();
-  setDepthMapsVGridsVPGridsAddPatchV(1);
+  if(m_fm.m_filterExact)
+  {
+	  filterExact();
+	  setDepthMapsVGridsVPGridsAddPatchV(1);
+  }
   
-  filterNeighbor(1);
-  setDepthMapsVGridsVPGridsAddPatchV(1);
-  
-  filterSmallGroups();
-  setDepthMapsVGridsVPGridsAddPatchV(1);
+  if (m_fm.m_filterNeighbor)
+  {
+	  filterNeighbor(1);
+	  setDepthMapsVGridsVPGridsAddPatchV(1);
+  }
+  if(m_fm.m_filterGroups)
+  {
+	  filterSmallGroups();
+	  setDepthMapsVGridsVPGridsAddPatchV(1);
+  }
 }
 
 void Cfilter::filterOutside(void) {

@@ -20,6 +20,9 @@ Soption::Soption(void) {
   m_oflag = -10;
 
   m_useMatch=0;			m_usePoint=0;	m_useSeed=0;
+  m_filterOutside=1;
+  m_filterExact=1;
+  m_filterNeighbor=1;
   // Max angle must be at least this big
   m_maxAngleThreshold = 10.0f * M_PI / 180.0f;
   // The smaller the tighter
@@ -106,6 +109,22 @@ void Soption::init(const std::string prefix, const std::string option) {
 	{
 		ifstr>>m_useSeed;
 	}
+	else if(name =="filterOutside")
+	{
+		ifstr>>m_filterOutside;
+	}
+	else if(name=="filterExact")
+	{
+		ifstr>>m_filterExact;
+	}
+	else if(name=="filterNeighbor")
+	{
+		ifstr>>m_filterNeighbor;
+	}
+	else if(name=="filterGroups")
+	{
+		ifstr>>m_filterGroups;
+	}
     else {
       cerr << "Unrecognizable option: " << name << endl;   exit (1);
     }
@@ -151,7 +170,8 @@ void Soption::init(const std::string prefix, const std::string option) {
        << "threshold: " << m_threshold << "  wsize: " << m_wsize << endl
        << "minImageNum: " << m_minImageNum << "  CPU: " << m_CPU << endl
        << "useVisData: " << m_useVisData << "  sequence: " << m_sequence << endl
-	   <<"usePoint:" <<m_usePoint<< "   useMatch: "<<m_useMatch<<"  useSeed: "<<m_useSeed<<endl;
+	   <<"usePoint:" <<m_usePoint<< "   useMatch: "<<m_useMatch<<"  useSeed: "<<m_useSeed<<endl
+	   <<"filterOutside:"<<m_filterOutside<<"  filterExact:"<<m_filterExact<<"  filterNeighbor:"<<m_filterNeighbor<<"  filterGroups:"<<m_filterGroups<<endl;
   cerr << "--------------------------------------------------" << endl;
 }
 

@@ -163,6 +163,10 @@ class CfindMatch {
   int m_useMatch;
   int m_usePoint;
   int m_useSeed;
+  int m_filterOutside;
+  int m_filterExact;
+  int m_filterNeighbor;
+  int m_filterGroups;
   void init(void);
   void initTargets(void);
   void updateThreshold(void);
