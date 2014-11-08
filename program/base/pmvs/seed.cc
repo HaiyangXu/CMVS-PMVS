@@ -205,7 +205,7 @@ void Cseed::initialMatch(const int index, const int id)
 						++m_fm.m_pos.m_counts[epipolarPointsSet[i]->m_imgeid][index3];
 
 					const int flag = initialMatchSub(index, epipolarPointsSet[i]->m_imgeid, id, patch);
-					if (flag == 0&&m_fm.m_useMatch&&!m_fm.m_useSeed) {
+					if (flag == 0&&!m_fm.m_useSeed) {
 						++count;
 						if (bestpatch.score(m_fm.m_nccThreshold) <
 							patch.score(m_fm.m_nccThreshold))
