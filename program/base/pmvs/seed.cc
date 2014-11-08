@@ -141,88 +141,96 @@ void Cseed::clear(void) {
 
 void Cseed::initialMatch(const int index, const int id)
 {
-  vector<int> visibleSet;  // 选择index对应图片的处理集合
-  
-  m_fm.m_optim.collectImages(index, visibleSet);
+	vector<int> visibleSet;  // 选择index对应图片的处理集合
 
-  if (m_fm.m_tau < (int)visibleSet.size())
-    visibleSet.resize(m_fm.m_tau);
-  
-  if (visibleSet.empty())
-    return;  
+	m_fm.m_optim.collectImages(index, visibleSet);
 
-  int totalcount = 0;
-  //======================================================================
-  // for each feature point, starting from the optical center, keep on
-  // matching until we find candidateThreshold patches
-  const int gheight = m_fm.m_pos.m_gheights[index];
-  const int gwidth = m_fm.m_pos.m_gwidths[index];
+	if (m_fm.m_tau < (int)visibleSet.size())
+		visibleSet.resize(m_fm.m_tau);
 
-  int index2 = -1;
-for (int y = 0; y < gheight; ++y) 
-{
-    for (int x = 0; x < gwidth; ++x) 
-	{
-      ++index2;
-      if (!canAdd(index, x, y))
-	continue;
+	if (visibleSet.empty())
+		return;  
 
-     for (int p = 0; p < (int)m_ppoints[index][index2].size(); ++p) {
-	// collect features that satisfies epipolar geometry
-	// constraints and sort them according to the differences of
-	// distances between two cameras.
-	vector<Ppoint> epipolarPointsSet;
- 
-	if (m_fm.m_useMatch)
-	{
-		collectCandidatesMatch(index, visibleSet,
-			*m_ppoints[index][index2][p], epipolarPointsSet);
-	} 
-	else
-	{
-		collectCandidates(index, visibleSet,
-			*m_ppoints[index][index2][p], epipolarPointsSet);
-	}
-	int count = 0;
-	Cpatch bestpatch;
+	int totalcount = 0;
 	//======================================================================
-	for (int i = 0; i < (int)epipolarPointsSet.size(); ++i) {
-	  Cpatch patch;
-	  patch.m_coord = epipolarPointsSet[i]->m_coord;
-	  patch.m_normal =
-            m_fm.m_pss.m_photos[index].m_center - patch.m_coord;
+	// for each feature point, starting from the optical center, keep on
+	// matching until we find candidateThreshold patches
+	const int gheight = m_fm.m_pos.m_gheights[index];
+	const int gwidth = m_fm.m_pos.m_gwidths[index];
 
-	  unitize(patch.m_normal);
-	  patch.m_normal[3] = 0.0;
-	  patch.m_flag = 0;
+	int index2 = -1;
+	for (int y = 0; y < gheight; ++y) 
+	{
+		for (int x = 0; x < gwidth; ++x) 
+		{
+			++index2;
+			if (!canAdd(index, x, y))
+				continue;
 
-          ++m_fm.m_pos.m_counts[index][index2];
-          const int ix = ((int)floor(epipolarPointsSet[i]->m_icoord[0] + 0.5f)) / m_fm.m_csize;
-          const int iy = ((int)floor(epipolarPointsSet[i]->m_icoord[1] + 0.5f)) / m_fm.m_csize;
-          const int index3 = iy * m_fm.m_pos.m_gwidths[epipolarPointsSet[i]->m_imgeid] + ix;
-          if (epipolarPointsSet[i]->m_imgeid < m_fm.m_tnum)
-            ++m_fm.m_pos.m_counts[epipolarPointsSet[i]->m_imgeid][index3];
-          
-	  const int flag = initialMatchSub(index, epipolarPointsSet[i]->m_imgeid, id, patch);
-	  if (flag == 0) {
-	    ++count;
-	    if (bestpatch.score(m_fm.m_nccThreshold) <
-                patch.score(m_fm.m_nccThreshold))
-	      bestpatch = patch;
-	    if (m_fm.m_countThreshold0 <= count)
-	      break;
-	  }
-     }
-	if (count != 0) {
-	  Ppatch ppatch(new Cpatch(bestpatch));
-	  m_fm.m_pos.addPatch(ppatch);
-	  ++totalcount;
-          break;
+			for (int p = 0; p < (int)m_ppoints[index][index2].size(); ++p) {
+				// collect features that satisfies epipolar geometry
+				// constraints and sort them according to the differences of
+				// distances between two cameras.
+				vector<Ppoint> epipolarPointsSet;
+
+				if (m_fm.m_usePoint&&m_fm.m_useMatch)
+				{
+					collectCandidatesMatch(index, visibleSet,
+						*m_ppoints[index][index2][p], epipolarPointsSet);
+				} 
+				else
+				{
+					collectCandidates(index, visibleSet,
+						*m_ppoints[index][index2][p], epipolarPointsSet);
+				}
+				int count = 0;
+				Cpatch bestpatch;
+				Cpatch patch;
+				//======================================================================
+				for (int i = 0; i < (int)epipolarPointsSet.size(); ++i) {
+					
+					patch.m_coord = epipolarPointsSet[i]->m_coord;
+					patch.m_normal =
+						m_fm.m_pss.m_photos[index].m_center - patch.m_coord;
+
+					unitize(patch.m_normal);
+					patch.m_normal[3] = 0.0;
+					patch.m_flag = 0;
+
+					++m_fm.m_pos.m_counts[index][index2];
+					const int ix = ((int)floor(epipolarPointsSet[i]->m_icoord[0] + 0.5f)) / m_fm.m_csize;
+					const int iy = ((int)floor(epipolarPointsSet[i]->m_icoord[1] + 0.5f)) / m_fm.m_csize;
+					const int index3 = iy * m_fm.m_pos.m_gwidths[epipolarPointsSet[i]->m_imgeid] + ix;
+					if (epipolarPointsSet[i]->m_imgeid < m_fm.m_tnum)
+						++m_fm.m_pos.m_counts[epipolarPointsSet[i]->m_imgeid][index3];
+
+					const int flag = initialMatchSub(index, epipolarPointsSet[i]->m_imgeid, id, patch);
+					if (flag == 0&&m_fm.m_useMatch&&!m_fm.m_useSeed) {
+						++count;
+						if (bestpatch.score(m_fm.m_nccThreshold) <
+							patch.score(m_fm.m_nccThreshold))
+							bestpatch = patch;
+						if (m_fm.m_countThreshold0 <= count)
+							break;
+					}
+					if (flag==0&&m_fm.m_useMatch&&m_fm.m_useSeed)//use all provided matches as seed
+					{
+						Ppatch ppatch(new Cpatch(patch));
+						m_fm.m_pos.addPatch(ppatch);
+						++totalcount;
+					}
+
+				}
+			if (m_fm.m_useSeed==0&&count != 0) {
+					Ppatch ppatch(new Cpatch(bestpatch));
+					m_fm.m_pos.addPatch(ppatch);
+					++totalcount;
+					break;
+				}
+			}
+		}
 	}
-      }
-    }
-  }
-  cerr << '(' << index << ',' << totalcount << ')' << flush;
+	cerr << '(' << index << ',' << totalcount << ')' << flush;
 }
 
 void Cseed::collectCells(const int index0, const int index1,

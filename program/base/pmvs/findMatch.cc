@@ -66,6 +66,7 @@ void CfindMatch::init(const Soption& option) {
   
   m_useMatch=option.m_useMatch;
   m_usePoint=option.m_usePoint;
+  m_useSeed=option.m_useSeed;
   //----------------------------------------------------------------------
   pthread_rwlock_init(&m_lock, NULL);
   m_imageLocks.resize(m_num);

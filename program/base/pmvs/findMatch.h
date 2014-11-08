@@ -162,7 +162,7 @@ class CfindMatch {
   std::vector<std::vector <std::map<int,int> >> m_matchmatrix;
   int m_useMatch;
   int m_usePoint;
-
+  int m_useSeed;
   void init(void);
   void initTargets(void);
   void updateThreshold(void);

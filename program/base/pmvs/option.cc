@@ -19,7 +19,7 @@ Soption::Soption(void) {
   m_tflag = -10;
   m_oflag = -10;
 
-  m_useMatch=0;			m_usePoint=0;
+  m_useMatch=0;			m_usePoint=0;	m_useSeed=0;
   // Max angle must be at least this big
   m_maxAngleThreshold = 10.0f * M_PI / 180.0f;
   // The smaller the tighter
@@ -102,6 +102,10 @@ void Soption::init(const std::string prefix, const std::string option) {
 	{
 		ifstr>>m_usePoint;
 	}
+	else if (name =="useSeed")
+	{
+		ifstr>>m_useSeed;
+	}
     else {
       cerr << "Unrecognizable option: " << name << endl;   exit (1);
     }
@@ -146,7 +150,8 @@ void Soption::init(const std::string prefix, const std::string option) {
   cerr << "level: " << m_level << "  csize: " << m_csize << endl
        << "threshold: " << m_threshold << "  wsize: " << m_wsize << endl
        << "minImageNum: " << m_minImageNum << "  CPU: " << m_CPU << endl
-       << "useVisData: " << m_useVisData << "  sequence: " << m_sequence << endl;
+       << "useVisData: " << m_useVisData << "  sequence: " << m_sequence << endl
+	   <<"usePoint:" <<m_usePoint<< "   useMatch: "<<m_useMatch<<"  useSeed: "<<m_useSeed<<endl;
   cerr << "--------------------------------------------------" << endl;
 }
 

@@ -36,7 +36,8 @@ struct Soption{
   std::vector<int> m_bindexes;
   std::vector<std::vector<int> > m_visdata;
   std::vector<std::vector<int> > m_visdata2;
-  
+  int m_useSeed;
+
   Soption(void);
   
   void init(const std::string prefix, const std::string option);
